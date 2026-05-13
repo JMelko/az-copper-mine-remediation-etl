@@ -34,3 +34,17 @@ The initial ETL script processes the raw laboratory Electronic Data Deliverables
 * **Deduplication:** Enforces tabular integrity by dropping duplicate records based on the `well_id` and `sample_date` subset, preventing false compliance exceedances in the final analytical dataset.
 * **Spatialization:** Converts tabular coordinates into distinct spatial geometries formatted to the EPSG:32612 (UTM Zone 12N) Coordinate Reference System.
 * **Database Loading:** Connects to the local PostGIS container via SQLAlchemy and appends the normalized spatial dataset into the `groundwater_monitoring` table for downstream analysis.
+
+### 2. View Generation (`scripts/02_create_compliance_view.py`)
+This script abstracts complex regulatory logic into the database layer by generating SQL `VIEW`s. 
+* **Idempotency:** Utilizes `CREATE OR REPLACE` logic to securely establish or update the `compliance_exceedances` view.
+* **Regulatory Abstraction:** Evaluates raw chemical concentrations against ADEQ/CERCLA Maximum Contaminant Levels (MCLs) to programmatically flag exceedances, providing a Single Source of Truth for downstream GIS and Tableau visualization.
+
+## Analytical Deliverables
+
+### Compliance Exceedance View
+To support downstream visualization and ensure strict regulatory adherence, compliance logic is enforced at the database level via a SQL `VIEW` (`compliance_exceedances`). 
+
+* **Logic:** Evaluates raw heavy metal concentrations against regulatory Maximum Contaminant Levels (MCLs). For example, Arsenic concentrations strictly greater than 0.010 mg/L are flagged as `EXCEEDANCE`.
+* **Output:** A spatial dataset containing well IDs, sample dates, categorized compliance statuses, and Well-Known Text (WKT) geometries.
+* **Integration:** This view serves as the direct, read-only data source for the client's Tableau dashboard, ensuring all mapping and reporting rely on a centralized, immutable source of truth.
